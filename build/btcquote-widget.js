@@ -86,7 +86,7 @@ var BTCQuote = function () {
 	};
 
 	self.updateWidget = function () {
-		for (var nameIndex in self._dataNames) {
+		for (var nameIndex=0; nameIndex<self._dataNames.length; nameIndex++) {
 			var name = self._dataNames[nameIndex];
 			var value = self._data[name]? self._data[name]:"";
 			self._elements[name].innerHTML = value;
@@ -146,7 +146,7 @@ var BTCQuote = function () {
 	if (!self.isOldBrowser) {
 		// 
 (function() {
-  var COUNT_FRAMERATE, COUNT_MS_PER_FRAME, DIGIT_FORMAT, DIGIT_HTML, DIGIT_SPEEDBOOST, DURATION, FORMAT_MARK_HTML, FORMAT_PARSER, FRAMERATE, FRAMES_PER_VALUE, MS_PER_FRAME, MutationObserver, Odometer, RIBBON_HTML, TRANSITION_END_EVENTS, TRANSITION_SUPPORT, VALUE_HTML, createFromHTML, fractionalPart, now, requestAnimationFrame, round, transitionCheckStyles, wrapJQuery, _jQueryWrapped, _old, _ref, _ref1,
+  var COUNT_FRAMERATE, COUNT_MS_PER_FRAME, DIGIT_FORMAT, DIGIT_HTML, DIGIT_SPEEDBOOST, DURATION, FORMAT_MARK_HTML, FORMAT_PARSER, FRAMERATE, FRAMES_PER_VALUE, MS_PER_FRAME, MutationObserver, Odometer, RIBBON_HTML, TRANSITION_END_EVENTS, TRANSITION_SUPPORT, VALUE_HTML, addClass, createFromHTML, fractionalPart, now, removeClass, requestAnimationFrame, round, transitionCheckStyles, trigger, wrapJQuery, _jQueryWrapped, _old, _ref, _ref1,
     __slice = [].slice;
 
   VALUE_HTML = '<span class="odometer-value"></span>';
@@ -192,6 +192,24 @@ var BTCQuote = function () {
     return el.children[0];
   };
 
+  removeClass = function(el, name) {
+    return el.className = el.className.replace(new RegExp("(^| )" + (name.split(' ').join('|')) + "( |$)", 'gi'), ' ');
+  };
+
+  addClass = function(el, name) {
+    removeClass(el, name);
+    return el.className += " " + name;
+  };
+
+  trigger = function(el, name) {
+    var evt;
+    if (document.createEvent != null) {
+      evt = document.createEvent('HTMLEvents');
+      evt.initEvent(name, true, true);
+      return el.dispatchEvent(evt);
+    }
+  };
+
   now = function() {
     var _ref, _ref1;
     return (_ref = (_ref1 = window.performance) != null ? typeof _ref1.now === "function" ? _ref1.now() : void 0 : void 0) != null ? _ref : +(new Date);
@@ -231,7 +249,8 @@ var BTCQuote = function () {
           var old;
           old = window.jQuery.fn[property];
           return window.jQuery.fn[property] = function(val) {
-            if ((val == null) || (this[0].odometer == null)) {
+            var _ref1;
+            if ((val == null) || (((_ref1 = this[0]) != null ? _ref1.odometer : void 0) == null)) {
               return old.apply(this, arguments);
             }
             return this[0].odometer.update(val);
@@ -246,7 +265,7 @@ var BTCQuote = function () {
 
   Odometer = (function() {
     function Odometer(options) {
-      var e, k, property, v, _base, _fn, _i, _j, _len, _len1, _ref, _ref1, _ref2,
+      var e, k, property, v, _base, _i, _len, _ref, _ref1, _ref2,
         _this = this;
       this.options = options;
       this.el = this.options.el;
@@ -255,8 +274,8 @@ var BTCQuote = function () {
       }
       this.el.odometer = this;
       _ref = Odometer.options;
-      for (v = _i = 0, _len = _ref.length; _i < _len; v = ++_i) {
-        k = _ref[v];
+      for (k in _ref) {
+        v = _ref[k];
         if (this.options[k] == null) {
           this.options[k] = v;
         }
@@ -270,20 +289,26 @@ var BTCQuote = function () {
       this.renderInside();
       this.render();
       try {
-        _ref2 = ['HTML', 'Text'];
-        _fn = function(property) {
-          return Object.defineProperty(_this.el, "inner" + property, {
-            get: function() {
-              return _this.inside["outer" + property];
-            },
-            set: function(val) {
-              return _this.update(val);
-            }
-          });
-        };
-        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-          property = _ref2[_j];
-          _fn(property);
+        _ref2 = ['innerHTML', 'innerText', 'textContent'];
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          property = _ref2[_i];
+          if (this.el[property] != null) {
+            (function(property) {
+              return Object.defineProperty(_this.el, property, {
+                get: function() {
+                  var _ref3;
+                  if (property === 'innerHTML') {
+                    return _this.inside.outerHTML;
+                  } else {
+                    return (_ref3 = _this.inside.innerText) != null ? _ref3 : _this.inside.textContent;
+                  }
+                },
+                set: function(val) {
+                  return _this.update(val);
+                }
+              });
+            })(property);
+          }
         }
       } catch (_error) {
         e = _error;
@@ -367,7 +392,8 @@ var BTCQuote = function () {
           renderEnqueued = true;
           setTimeout(function() {
             _this.render();
-            return renderEnqueued = false;
+            renderEnqueued = false;
+            return trigger(_this.el, 'odometerdone');
           }, 0);
           return true;
         }, false));
@@ -448,17 +474,18 @@ var BTCQuote = function () {
       if (!(diff = newValue - this.value)) {
         return;
       }
+      removeClass(this.el, 'odometer-animating-up odometer-animating-down odometer-animating');
       if (diff > 0) {
-        this.el.className += ' odometer-animating-up';
+        addClass(this.el, 'odometer-animating-up');
       } else {
-        this.el.className += ' odometer-animating-down';
+        addClass(this.el, 'odometer-animating-down');
       }
       this.stopWatchingMutations();
       this.animate(newValue);
       this.startWatchingMutations();
       setTimeout(function() {
         _this.el.offsetHeight;
-        return _this.el.className += ' odometer-animating';
+        return addClass(_this.el, 'odometer-animating');
       }, 0);
       return this.value = newValue;
     };
@@ -477,18 +504,18 @@ var BTCQuote = function () {
       }
     };
 
-    Odometer.prototype.addSpacer = function(char, before, extraClasses) {
+    Odometer.prototype.addSpacer = function(chr, before, extraClasses) {
       var spacer;
       spacer = createFromHTML(FORMAT_MARK_HTML);
-      spacer.innerHTML = char;
+      spacer.innerHTML = chr;
       if (extraClasses) {
-        spacer.className += " " + extraClasses;
+        addClass(spacer, extraClasses);
       }
       return this.insertDigit(spacer, before);
     };
 
     Odometer.prototype.addDigit = function(value, repeating) {
-      var char, digit, resetted;
+      var chr, digit, resetted;
       if (repeating == null) {
         repeating = true;
       }
@@ -508,12 +535,12 @@ var BTCQuote = function () {
             this.resetFormat();
             resetted = true;
           }
-          char = this.format.repeating[this.format.repeating.length - 1];
+          chr = this.format.repeating[this.format.repeating.length - 1];
           this.format.repeating = this.format.repeating.substring(0, this.format.repeating.length - 1);
-          if (char === 'd') {
+          if (chr === 'd') {
             break;
           }
-          this.addSpacer(char);
+          this.addSpacer(chr);
         }
       }
       digit = this.renderDigit();
@@ -543,6 +570,7 @@ var BTCQuote = function () {
         if ((now() - start) > _this.options.duration) {
           _this.value = newValue;
           _this.render();
+          trigger(_this.el, 'odometerdone');
           return;
         }
         delta = now() - last;
@@ -661,10 +689,10 @@ var BTCQuote = function () {
           numEl.innerHTML = frame;
           this.ribbons[i].appendChild(numEl);
           if (j === frames.length - 1) {
-            numEl.className += ' odometer-last-value';
+            addClass(numEl, 'odometer-last-value');
           }
           if (j === 0) {
-            numEl.className += ' odometer-first-value';
+            addClass(numEl, 'odometer-first-value');
           }
         }
       }
@@ -697,14 +725,17 @@ var BTCQuote = function () {
   }, 0);
 
   Odometer.init = function() {
-    var el, elements, _i, _len, _results;
+    var el, elements, _i, _len, _ref1, _results;
+    if (document.querySelectorAll == null) {
+      return;
+    }
     elements = document.querySelectorAll(Odometer.options.selector || '.odometer');
     _results = [];
     for (_i = 0, _len = elements.length; _i < _len; _i++) {
       el = elements[_i];
       _results.push(el.odometer = new Odometer({
         el: el,
-        value: el.innerText
+        value: (_ref1 = el.innerText) != null ? _ref1 : el.textContent
       }));
     }
     return _results;

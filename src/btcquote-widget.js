@@ -86,7 +86,7 @@ var BTCQuote = function () {
 	};
 
 	self.updateWidget = function () {
-		for (var nameIndex in self._dataNames) {
+		for (var nameIndex=0; nameIndex<self._dataNames.length; nameIndex++) {
 			var name = self._dataNames[nameIndex];
 			var value = self._data[name]? self._data[name]:"";
 			self._elements[name].innerHTML = value;
