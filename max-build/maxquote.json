@@ -1,0 +1,15 @@
+{
+"market_name" : "MAX/BTC",
+"market_coin_code": "MAX",
+"base_coin_code": "BTC",
+"last_trade": "0.00250000",
+"last_sell": "0.00250000",
+"last_buy": "0.00246101",
+"current_ask":"0.00259999",
+"current_ask_volume":"10.00000000",
+"current_bid":"0.00250000",
+"current_bid_volume":"74.02072323",
+"highest_24h": "0.00050000",
+"lowest_24h": "0.00610000",
+"volume_base_24h": "17.17781057"
+}
